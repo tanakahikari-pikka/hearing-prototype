@@ -13,7 +13,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, ArrowRight, FileAudio, ImagePlus, Loader2, Mic, MicOff, Save, Upload } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { useMobile } from "@/hooks/use-mobile"
+import { useIsMobile } from "@/hooks/use-mobile"
+
 
 // フェーズの定義
 const phases = [
@@ -28,7 +29,7 @@ const phases = [
 
 export default function PhasePage({ params }: { params: { id: string; phase: string } }) {
   const router = useRouter()
-  const isMobile = useMobile()
+  const isMobile = useIsMobile()
   const projectId = params.id
   const currentPhase = Number.parseInt(params.phase)
   const phase = phases.find((p) => p.id === currentPhase) || phases[0]
