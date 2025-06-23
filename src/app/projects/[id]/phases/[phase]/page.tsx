@@ -6,11 +6,85 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, ArrowRight, FileAudio, ImagePlus, Loader2, Mic, MicOff, Save, Upload, Check } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { ArrowLeft, ArrowRight, FileAudio, ImagePlus, Loader2, Mic, MicOff, Save, Upload, Check, Ruler } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-// フェーズの定義（選択肢付き）
+// スライダーコンポーネント
+const Slider = ({ value, onValueChange, min = 0, max = 100, step = 1, unit = "", label = "" }: { value: number, onValueChange: (value: number) => void, min?: number, max?: number, step?: number, unit?: string, label?: string }) => {
+  return (
+    <div className="space-y-2">
+      {label && <Label className="text-sm font-medium">{label}</Label>}
+      <div className="relative">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onValueChange(parseFloat(e.target.value))}
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+        />
+        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+          <span>{min}{unit}</span>
+          <span className="font-medium text-primary">{value}{unit}</span>
+          <span>{max}{unit}</span>
+        </div>
+      </div>
+      <style jsx>{`
+        .slider::-webkit-slider-thumb {
+          appearance: none;
+          height: 18px;
+          width: 18px;
+          border-radius: 50%;
+          background: hsl(var(--primary));
+          cursor: pointer;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .slider::-moz-range-thumb {
+          height: 18px;
+          width: 18px;
+          border-radius: 50%;
+          background: hsl(var(--primary));
+          cursor: pointer;
+          border: none;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+      `}</style>
+    </div>
+  )
+}
+
+// 数値入力コンポーネント
+const NumericInput = ({ value, onValueChange, min = 0, max = 100, step = 1, unit = "", label = "", placeholder = "" }: { value: number, onValueChange: (value: number) => void, min?: number, max?: number, step?: number, unit?: string, label?: string, placeholder?: string }) => {
+  return (
+    <div className="space-y-2">
+      {label && <Label className="text-sm font-medium">{label}</Label>}
+      <div className="flex items-center space-x-2">
+        <Input
+          type="number"
+          min={min}
+          max={max}
+          step={step}
+          value={value || ""}
+          onChange={(e) => onValueChange(parseFloat(e.target.value) || 0)}
+          placeholder={placeholder}
+          className="flex-1"
+        />
+        {unit && (
+          <span className="text-sm text-muted-foreground font-medium">{unit}</span>
+        )}
+      </div>
+      <div className="text-xs text-muted-foreground">
+        範囲: {min}{unit} ～ {max}{unit}
+      </div>
+    </div>
+  )
+}
+
+// フェーズの定義（数値入力対応版）
 const phases = [
   {
     id: 1,
@@ -20,30 +94,12 @@ const phases = [
       {
         id: "usage_scene",
         label: "着用シーン",
+        type: "single_choice",
         options: [
           { value: "casual", label: "普段着・カジュアル", description: "日常生活での着用" },
           { value: "sport", label: "スポーツ・アクティブ", description: "運動や外遊び用" },
           { value: "work", label: "仕事・オフィス", description: "職場での着用" },
           { value: "formal", label: "フォーマル・特別な日", description: "きちんとした場面" }
-        ]
-      },
-      {
-        id: "target_season",
-        label: "着用季節",
-        options: [
-          { value: "spring_summer", label: "春夏", description: "暖かい季節向け" },
-          { value: "autumn_winter", label: "秋冬", description: "涼しい季節向け" },
-          { value: "all_season", label: "オールシーズン", description: "年中着用可能" }
-        ]
-      },
-      {
-        id: "brand_image",
-        label: "ブランドイメージ",
-        options: [
-          { value: "natural", label: "ナチュラル・親しみやすい", description: "自然体で温かみのある" },
-          { value: "modern", label: "モダン・都会的", description: "洗練されたスタイリッシュ" },
-          { value: "classic", label: "クラシック・上品", description: "伝統的で品のある" },
-          { value: "trendy", label: "トレンディ・個性的", description: "流行を取り入れた" }
         ]
       }
     ]
@@ -56,6 +112,7 @@ const phases = [
       {
         id: "material_type",
         label: "素材タイプ",
+        type: "single_choice",
         options: [
           { value: "cotton_100", label: "綿100%", description: "肌触り良く、吸湿性に優れる" },
           { value: "polyester", label: "ポリエステル", description: "速乾性があり、型崩れしにくい" },
@@ -64,24 +121,26 @@ const phases = [
         ]
       },
       {
-        id: "fabric_weight",
+        id: "fabric_thickness",
         label: "生地の厚さ",
-        options: [
-          { value: "light", label: "薄手", description: "軽やかで涼しい（夏向け）" },
-          { value: "medium", label: "中厚", description: "程よい厚みで年中使える" },
-          { value: "heavy", label: "厚手", description: "しっかりした生地（秋冬向け）" }
-        ]
+        type: "slider",
+        min: 100,
+        max: 400,
+        step: 10,
+        unit: "g/m²",
+        defaultValue: 180,
+        description: "生地の重量（厚さ）を指定します"
       },
       {
-        id: "functional_features",
-        label: "機能性",
-        multiple: true,
-        options: [
-          { value: "quick_dry", label: "速乾性", description: "汗をかいてもすぐ乾く" },
-          { value: "anti_bacterial", label: "抗菌防臭", description: "ニオイを抑える" },
-          { value: "uv_protection", label: "UV カット", description: "紫外線から肌を守る" },
-          { value: "stretch", label: "ストレッチ", description: "伸縮性があり動きやすい" }
-        ]
+        id: "stretch_percentage",
+        label: "ストレッチ性",
+        type: "slider",
+        min: 0,
+        max: 30,
+        step: 1,
+        unit: "%",
+        defaultValue: 5,
+        description: "生地の伸縮性を指定します（0%=伸びない、30%=よく伸びる）"
       }
     ]
   },
@@ -93,6 +152,7 @@ const phases = [
       {
         id: "neckline",
         label: "ネックライン",
+        type: "single_choice",
         options: [
           { value: "crew", label: "クルーネック", description: "定番の丸首" },
           { value: "v_neck", label: "Vネック", description: "V字型の首元" },
@@ -101,8 +161,21 @@ const phases = [
         ]
       },
       {
+        id: "v_neck_depth",
+        label: "Vネックの深さ",
+        type: "slider",
+        min: 3,
+        max: 12,
+        step: 0.5,
+        unit: "cm",
+        defaultValue: 7,
+        description: "Vネックの場合の深さを調整",
+        condition: { field: "neckline", value: "v_neck" }
+      },
+      {
         id: "sleeve_length",
         label: "袖の長さ",
+        type: "single_choice",
         options: [
           { value: "short", label: "半袖", description: "標準的な半袖" },
           { value: "long", label: "長袖", description: "手首まで覆う" },
@@ -111,14 +184,38 @@ const phases = [
         ]
       },
       {
-        id: "body_fit",
-        label: "フィット感",
-        options: [
-          { value: "slim", label: "スリムフィット", description: "体にフィットするタイト" },
-          { value: "regular", label: "レギュラーフィット", description: "程よいゆとりの標準的" },
-          { value: "loose", label: "ルーズフィット", description: "ゆったりとした着心地" },
-          { value: "oversized", label: "オーバーサイズ", description: "大きめでトレンディ" }
-        ]
+        id: "sleeve_cuff_width",
+        label: "袖口の折り返し幅",
+        type: "numeric",
+        min: 0,
+        max: 8,
+        step: 0.5,
+        unit: "cm",
+        defaultValue: 2,
+        description: "袖口の折り返し部分の幅",
+        condition: { field: "sleeve_length", value: ["short", "long", "three_quarter"] }
+      },
+      {
+        id: "body_length",
+        label: "着丈",
+        type: "slider",
+        min: 50,
+        max: 80,
+        step: 1,
+        unit: "cm",
+        defaultValue: 65,
+        description: "首元から裾までの長さ（Mサイズ基準）"
+      },
+      {
+        id: "body_width_adjustment",
+        label: "身幅調整",
+        type: "slider",
+        min: -5,
+        max: 10,
+        step: 0.5,
+        unit: "cm",
+        defaultValue: 0,
+        description: "標準サイズからの身幅調整（±で調整）"
       }
     ]
   },
@@ -128,33 +225,48 @@ const phases = [
     description: "細部の仕様や装飾について指定します",
     selections: [
       {
-        id: "color_preference",
-        label: "色の系統",
-        options: [
-          { value: "bright", label: "明るい色", description: "ビビッドで元気な印象" },
-          { value: "pastel", label: "パステルカラー", description: "優しく上品な印象" },
-          { value: "dark", label: "ダークカラー", description: "落ち着いた大人の印象" },
-          { value: "neutral", label: "ニュートラルカラー", description: "どんな場面でも合わせやすい" }
-        ]
-      },
-      {
         id: "pocket_style",
         label: "ポケット",
+        type: "single_choice",
         options: [
           { value: "none", label: "なし", description: "シンプルなデザイン" },
           { value: "chest_left", label: "左胸ポケット", description: "定番の胸ポケット" },
-          { value: "chest_both", label: "両胸ポケット", description: "左右両方にポケット" },
-          { value: "side", label: "サイドポケット", description: "腰部分のポケット" }
+          { value: "chest_both", label: "両胸ポケット", description: "左右両方にポケット" }
         ]
       },
       {
-        id: "hem_style",
-        label: "裾のスタイル",
-        options: [
-          { value: "straight", label: "ストレート", description: "まっすぐなカット" },
-          { value: "curved", label: "カーブ", description: "丸みを帯びたカット" },
-          { value: "split", label: "スリット", description: "両サイドに切れ込み" }
-        ]
+        id: "pocket_size",
+        label: "ポケットサイズ",
+        type: "numeric",
+        min: 8,
+        max: 15,
+        step: 0.5,
+        unit: "cm",
+        defaultValue: 11,
+        description: "ポケットの幅",
+        condition: { field: "pocket_style", value: ["chest_left", "chest_both"] }
+      },
+      {
+        id: "hem_curve",
+        label: "裾のカーブ",
+        type: "slider",
+        min: 0,
+        max: 5,
+        step: 0.2,
+        unit: "cm",
+        defaultValue: 2,
+        description: "裾の丸みの強さ（0=ストレート、5=大きなカーブ）"
+      },
+      {
+        id: "side_seam_curve",
+        label: "サイドシームのカーブ",
+        type: "slider",
+        min: 0,
+        max: 3,
+        step: 0.1,
+        unit: "cm",
+        defaultValue: 1,
+        description: "脇線のカーブの強さ（ウエストシェイプ）"
       }
     ]
   },
@@ -166,51 +278,54 @@ const phases = [
       {
         id: "size_range",
         label: "サイズ展開",
-        multiple: true,
+        type: "multiple_choice",
         options: [
           { value: "xs", label: "XS", description: "エクストラスモール" },
           { value: "s", label: "S", description: "スモール" },
           { value: "m", label: "M", description: "ミディアム" },
           { value: "l", label: "L", description: "ラージ" },
-          { value: "xl", label: "XL", description: "エクストララージ" },
-          { value: "xxl", label: "XXL", description: "ダブルエクストララージ" }
+          { value: "xl", label: "XL", description: "エクストララージ" }
         ]
       },
       {
-        id: "length_preference",
-        label: "着丈の長さ",
-        options: [
-          { value: "short", label: "短め", description: "ウエストライン程度" },
-          { value: "regular", label: "標準", description: "腰骨あたり" },
-          { value: "long", label: "長め", description: "ヒップライン程度" }
-        ]
+        id: "size_grading",
+        label: "サイズ間隔",
+        type: "slider",
+        min: 3,
+        max: 8,
+        step: 0.5,
+        unit: "cm",
+        defaultValue: 5,
+        description: "各サイズ間の身幅差"
       }
     ]
   },
   {
     id: 6,
     name: "生産",
-    description: "生産方法や注意点について指定します",
+    description: "生産方法や品質基準について指定します",
     selections: [
       {
-        id: "production_method",
-        label: "生産方法",
-        options: [
-          { value: "mass", label: "大量生産", description: "コストを抑えた標準的な製法" },
-          { value: "small_batch", label: "小ロット生産", description: "品質重視の少量製法" },
-          { value: "custom", label: "オーダーメイド", description: "個別対応の特別製法" }
-        ]
+        id: "seam_allowance",
+        label: "縫い代",
+        type: "numeric",
+        min: 0.5,
+        max: 2,
+        step: 0.1,
+        unit: "cm",
+        defaultValue: 1,
+        description: "縫い代の幅"
       },
       {
-        id: "quality_focus",
-        label: "品質重視点",
-        multiple: true,
-        options: [
-          { value: "durability", label: "耐久性", description: "長持ちする作り" },
-          { value: "comfort", label: "着心地", description: "肌触りと快適性" },
-          { value: "appearance", label: "見た目", description: "美しい仕上がり" },
-          { value: "sustainability", label: "持続可能性", description: "環境への配慮" }
-        ]
+        id: "stitch_density",
+        label: "縫い目密度",
+        type: "slider",
+        min: 10,
+        max: 16,
+        step: 1,
+        unit: "針/cm",
+        defaultValue: 12,
+        description: "1cmあたりの縫い目数（品質に関わる）"
       }
     ]
   },
@@ -220,20 +335,21 @@ const phases = [
     description: "全体の仕様を確認し、最終調整を行います",
     selections: [
       {
-        id: "priority_check",
-        label: "最重要ポイント",
-        options: [
-          { value: "comfort", label: "着心地", description: "何より快適性を重視" },
-          { value: "design", label: "デザイン", description: "見た目の美しさを重視" },
-          { value: "functionality", label: "機能性", description: "実用性を重視" },
-          { value: "cost", label: "コスト", description: "価格を抑えることを重視" }
-        ]
+        id: "fitting_tolerance",
+        label: "フィット許容範囲",
+        type: "slider",
+        min: 1,
+        max: 5,
+        step: 0.5,
+        unit: "cm",
+        defaultValue: 2,
+        description: "着用時の余裕度"
       }
     ]
   }
 ]
 
-export default function PhasePage() {
+export default function NumericInputPhasePage() {
   const [currentPhase, setCurrentPhase] = useState(1)
   const [activeTab, setActiveTab] = useState("selections")
   const [isRecording, setIsRecording] = useState(false)
@@ -247,17 +363,17 @@ export default function PhasePage() {
   const fileInputRef = useRef(null)
   const phase = phases.find(p => p.id === currentPhase) || phases[0]
 
-  // 選択肢の変更ハンドラー
-  const handleSelectionChange = (selectionId: any, optionValue: any, isMultiple = false) => {
+  // 選択肢・数値の変更ハンドラー
+  const handleValueChange = (selectionId: string, value: any, type: string) => {
     setSelections(prev => {
       const phaseKey = `phase_${currentPhase}`
       const phaseSelections = prev[phaseKey] || {}
       
-      if (isMultiple) {
+      if (type === "multiple_choice") {
         const currentValues = phaseSelections[selectionId] || []
-        const newValues = currentValues.includes(optionValue)
-          ? currentValues.filter((v: string) => v !== optionValue)
-          : [...currentValues, optionValue]
+        const newValues = currentValues.includes(value)
+          ? currentValues.filter((v: string) => v !== value)
+          : [...currentValues, value]
         
         return {
           ...prev,
@@ -271,23 +387,42 @@ export default function PhasePage() {
           ...prev,
           [phaseKey]: {
             ...phaseSelections,
-            [selectionId]: optionValue
+            [selectionId]: value
           }
         }
       }
     })
   }
 
-  // 選択済みかチェック
-  const isSelected = (selectionId: string, optionValue: string, isMultiple = false) => {
+  // 選択済み・入力済みかチェック
+  const getValue = (selectionId: string, defaultValue?: any) => {
     const phaseKey = `phase_${currentPhase}`
     const phaseSelections = selections[phaseKey] || {}
+    return phaseSelections[selectionId] ?? defaultValue
+  }
+
+  const isSelected = (selectionId: string, optionValue: string, isMultiple = false) => {
+    const value = getValue(selectionId, isMultiple ? [] : null)
     
     if (isMultiple) {
-      const currentValues = phaseSelections[selectionId] || []
-      return currentValues.includes(optionValue)
+      return Array.isArray(value) && value.includes(optionValue)
     } else {
-      return phaseSelections[selectionId] === optionValue
+      return value === optionValue
+    }
+  }
+
+  // 条件付き表示のチェック
+  const shouldShowField = (selection: any) => {
+    if (!selection.condition) return true
+    
+    const conditionField = selection.condition.field
+    const conditionValue = selection.condition.value
+    const currentValue = getValue(conditionField)
+    
+    if (Array.isArray(conditionValue)) {
+      return conditionValue.includes(currentValue)
+    } else {
+      return currentValue === conditionValue
     }
   }
 
@@ -296,25 +431,24 @@ export default function PhasePage() {
     if (isRecording) {
       const timer = setTimeout(() => {
         const phaseExamples = {
-          1: "このTシャツは20代後半から30代の女性をターゲットにした夏物の新作です。海辺のリゾートでも街中でも着られる、軽やかで涼しげな印象を与えるデザインにしたいです。",
-          2: "素材は綿100%の薄手の生地で、肌触りが良く通気性の高いものを使用したいです。速乾性もあると嬉しいです。",
-          3: "Vネックで半袖、ゆったりめのフィット感が良いと思います。",
-          4: "色は明るい青系で、ポケットは左胸に一つ、裾はカーブを付けたいです。",
-          5: "サイズはS、M、Lの3展開で、着丈は標準的な長さでお願いします。",
-          6: "品質重視で、特に着心地と耐久性を大切にしたいです。",
-          7: "全体的に着心地を最重要視してください。"
+          1: "このTシャツは20代後半から30代の女性をターゲットにした夏物の新作です。",
+          2: "素材は綿100%で、200g/m²程度の中厚、ストレッチ性は10%くらいがいいです。",
+          3: "Vネックで深さは8cm、半袖で袖口の折り返しは3cm、着丈は70cmでお願いします。",
+          4: "左胸ポケットで12cm幅、裾は軽くカーブさせて、サイドシームも少しカーブを付けたいです。",
+          5: "S、M、Lの3展開で、サイズ間隔は5cmでお願いします。",
+          6: "縫い代は1.2cm、縫い目密度は14針/cmで品質重視でお願いします。",
+          7: "フィット許容範囲は2.5cmで、少しゆとりのある着心地にしたいです。"
         }
 
         setTranscript(phaseExamples[currentPhase as keyof typeof phaseExamples] || "")
         setIsRecording(false)
 
-        // AI分析シミュレーション
         setIsProcessing(true)
         setTimeout(() => {
           const suggestions = [
-            "音声入力の内容から、適切な選択肢を自動選択しました",
-            "追加の提案: より詳細な仕様調整が可能です",
-            "類似した過去のプロジェクトと比較して最適化しました"
+            "音声入力から数値情報を抽出し、スライダーに自動反映しました",
+            "過去のプロジェクトと比較して、最適な数値範囲を提案します",
+            "技術的制約をチェックし、実現可能な仕様に調整しました"
           ]
           setAiSuggestions(suggestions as never[])
           setIsProcessing(false)
@@ -325,12 +459,10 @@ export default function PhasePage() {
     }
   }, [isRecording, currentPhase])
 
-  // 録音開始/停止
   const toggleRecording = () => {
     setIsRecording(!isRecording)
   }
 
-  // 画像アップロード
   const handleFileChange = (e: { target: { files: any } }) => {
     const files = e.target.files
     if (files && files.length > 0) {
@@ -346,14 +478,14 @@ export default function PhasePage() {
       reader.onload = (e) => {
         const result = e.target?.result
         if (result && typeof result === 'string') {
+          setUploadedImages(prev => [...prev, result] as never[])
           
-          // 画像分析シミュレーション
           setIsProcessing(true)
           setTimeout(() => {
             const suggestions = [
-              "画像から色合いを検出し、カラーパレットに反映しました",
-              "デザイン要素を認識し、適切な選択肢を提案します",
-              "類似デザインのデータベースから参考例を検索中"
+              "画像から寸法情報を検出し、数値入力フィールドに反映しました",
+              "デザイン要素を認識し、適切な数値範囲を提案します",
+              "類似デザインのデータベースから最適な数値を検索中"
             ]
             setAiSuggestions(suggestions as never[])
             setIsProcessing(false)
@@ -364,7 +496,6 @@ export default function PhasePage() {
     })
   }
 
-  // ドラッグ&ドロップ
   const handleDrag = (e: { preventDefault: () => void; stopPropagation: () => void; type: string }) => {
     e.preventDefault()
     e.stopPropagation()
@@ -385,7 +516,6 @@ export default function PhasePage() {
     }
   }
 
-  // フェーズ移動
   const goToNextPhase = () => {
     if (currentPhase < phases.length) {
       setCurrentPhase(currentPhase + 1)
@@ -398,15 +528,124 @@ export default function PhasePage() {
     }
   }
 
-  // 選択肢の完了度チェック
   const getPhaseCompletionRate = () => {
     const phaseKey = `phase_${currentPhase}`
     const phaseSelections = selections[phaseKey] || {}
-    const requiredSelections = phase.selections?.filter(s => !s.multiple) || []
-    const completedSelections = requiredSelections.filter(s => phaseSelections[s.id])
+    const requiredSelections = phase.selections?.filter(s => 
+      s.type !== "multiple_choice" && shouldShowField(s)
+    ) || []
+    const completedSelections = requiredSelections.filter(s => {
+      const value = phaseSelections[s.id]
+      return value !== undefined && value !== null && value !== ""
+    })
     
     return requiredSelections.length > 0 ? 
       Math.round((completedSelections.length / requiredSelections.length) * 100) : 100
+  }
+
+  // 入力フィールドのレンダリング
+  const renderInputField = (selection: any) => {
+    const currentValue = getValue(selection.id, selection.defaultValue)
+
+    switch (selection.type) {
+      case "single_choice":
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {selection.options.map((option: any) => (
+              <div
+                key={option.value}
+                className={`border rounded-lg p-4 cursor-pointer transition-all hover:bg-muted/50 ${
+                  isSelected(selection.id, option.value)
+                    ? 'border-primary bg-primary/5'
+                    : ''
+                }`}
+                onClick={() => handleValueChange(selection.id, option.value, "single_choice")}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="font-medium">{option.label}</div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {option.description}
+                    </div>
+                  </div>
+                  {isSelected(selection.id, option.value) && (
+                    <Check className="h-5 w-5 text-primary mt-0.5" />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+
+      case "multiple_choice":
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {selection.options.map((option: any) => (
+              <div
+                key={option.value}
+                className={`border rounded-lg p-4 cursor-pointer transition-all hover:bg-muted/50 ${
+                  isSelected(selection.id, option.value, true)
+                    ? 'border-primary bg-primary/5'
+                    : ''
+                }`}
+                onClick={() => handleValueChange(selection.id, option.value, "multiple_choice")}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="font-medium">{option.label}</div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {option.description}
+                    </div>
+                  </div>
+                  {isSelected(selection.id, option.value, true) && (
+                    <Check className="h-5 w-5 text-primary mt-0.5" />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+
+      case "slider":
+        return (
+          <div className="max-w-md">
+            <Slider
+              value={currentValue}
+              onValueChange={(value) => handleValueChange(selection.id, value, "slider")}
+              min={selection.min}
+              max={selection.max}
+              step={selection.step}
+              unit={selection.unit}
+              label=""
+            />
+            {selection.description && (
+              <p className="text-sm text-muted-foreground mt-2">{selection.description}</p>
+            )}
+          </div>
+        )
+
+      case "numeric":
+        return (
+          <div className="max-w-md">
+            <NumericInput
+              value={currentValue}
+              onValueChange={(value) => handleValueChange(selection.id, value, "numeric")}
+              min={selection.min}
+              max={selection.max}
+              step={selection.step}
+              unit={selection.unit}
+              label=""
+              placeholder={`${selection.min} ～ ${selection.max}`}
+            />
+            {selection.description && (
+              <p className="text-sm text-muted-foreground mt-2">{selection.description}</p>
+            )}
+          </div>
+        )
+
+      default:
+        return null
+    }
   }
 
   return (
@@ -414,12 +653,13 @@ export default function PhasePage() {
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-2xl font-bold">夏物新作ワンピース</h1>
+            <h1 className="text-2xl font-bold">夏物新作Tシャツ</h1>
           </div>
 
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-muted-foreground">
-              選択肢機能拡張版
+              <Ruler className="h-3 w-3 mr-1" />
+              数値入力対応版
             </Badge>
             <Button variant="outline" size="sm" className="gap-1">
               <Save className="h-4 w-4" /> 保存
@@ -434,7 +674,7 @@ export default function PhasePage() {
             </div>
             <div className="text-sm text-muted-foreground">
               {Math.round((currentPhase / phases.length) * 100)}% 完了 | 
-              選択肢完了率: {getPhaseCompletionRate()}%
+              入力完了率: {getPhaseCompletionRate()}%
             </div>
           </div>
           <Progress value={(currentPhase / phases.length) * 100} className="h-2" />
@@ -442,7 +682,10 @@ export default function PhasePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{phase.name}</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              {phase.name}
+              <Ruler className="h-5 w-5 text-muted-foreground" />
+            </CardTitle>
             <CardDescription>{phase.description}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -450,7 +693,7 @@ export default function PhasePage() {
               <TabsList className="grid grid-cols-3 mb-6">
                 <TabsTrigger value="selections" className="flex items-center gap-2">
                   <Check className="h-4 w-4" />
-                  <span>選択肢</span>
+                  <span>入力</span>
                 </TabsTrigger>
                 <TabsTrigger value="voice" className="flex items-center gap-2">
                   <FileAudio className="h-4 w-4" />
@@ -463,63 +706,17 @@ export default function PhasePage() {
               </TabsList>
 
               <TabsContent value="selections" className="space-y-6">
-                {phase.selections?.map((selection) => (
+                {phase.selections?.filter(shouldShowField).map((selection) => (
                   <div key={selection.id} className="space-y-3">
-                    <h3 className="font-medium text-lg">{selection.label}</h3>
-                    
-                    {selection.multiple ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {selection.options.map((option) => (
-                          <div
-                            key={option.value}
-                            className={`border rounded-lg p-4 cursor-pointer transition-all hover:bg-muted/50 ${
-                              isSelected(selection.id, option.value, true)
-                                ? 'border-primary bg-primary/5'
-                                : ''
-                            }`}
-                            onClick={() => handleSelectionChange(selection.id, option.value, true)}
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="font-medium">{option.label}</div>
-                                <div className="text-sm text-muted-foreground mt-1">
-                                  {option.description}
-                                </div>
-                              </div>
-                              {isSelected(selection.id, option.value, true) && (
-                                <Check className="h-5 w-5 text-primary mt-0.5" />
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {selection.options.map((option) => (
-                          <div
-                            key={option.value}
-                            className={`border rounded-lg p-4 cursor-pointer transition-all hover:bg-muted/50 ${
-                              isSelected(selection.id, option.value)
-                                ? 'border-primary bg-primary/5'
-                                : ''
-                            }`}
-                            onClick={() => handleSelectionChange(selection.id, option.value)}
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="font-medium">{option.label}</div>
-                                <div className="text-sm text-muted-foreground mt-1">
-                                  {option.description}
-                                </div>
-                              </div>
-                              {isSelected(selection.id, option.value) && (
-                                <Check className="h-5 w-5 text-primary mt-0.5" />
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium text-lg">{selection.label}</h3>
+                      {(selection.type === "slider" || selection.type === "numeric") && (
+                        <Badge variant="secondary" className="text-xs">
+                          {selection.type === "slider" ? "スライダー" : "数値入力"}
+                        </Badge>
+                      )}
+                    </div>
+                    {renderInputField(selection)}
                   </div>
                 ))}
               </TabsContent>
@@ -551,6 +748,9 @@ export default function PhasePage() {
                     placeholder="音声を録音すると、ここに文字起こしが表示されます..."
                     rows={6}
                   />
+                  <p className="text-sm text-muted-foreground">
+                    💡 数値を含む音声（例：「袖口は3cm」「着丈70cm」）は自動的に数値入力欄に反映されます
+                  </p>
                 </div>
               </TabsContent>
 
@@ -575,7 +775,10 @@ export default function PhasePage() {
                   <Button onClick={() => (fileInputRef.current as unknown as HTMLInputElement)?.click()} variant="outline" size="lg" className="mb-4">
                     <Upload className="h-5 w-5 mr-2" /> 画像を選択
                   </Button>
-                  <div className="text-center text-sm text-muted-foreground">または画像をここにドラッグ＆ドロップ</div>
+                  <div className="text-center text-sm text-muted-foreground">
+                    または画像をここにドラッグ＆ドロップ<br/>
+                    <span className="text-xs">💡 寸法図や設計図から数値を自動抽出します</span>
+                  </div>
                 </div>
 
                 {uploadedImages.length > 0 && (
@@ -600,15 +803,15 @@ export default function PhasePage() {
             {isProcessing && (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-3 text-lg">AIが分析中...</span>
+                <span className="ml-3 text-lg">AIが数値を解析中...</span>
               </div>
             )}
 
             {aiSuggestions.length > 0 && (
               <Alert className="mt-6">
                 <AlertTitle className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  AIからの提案
+                  <Ruler className="h-4 w-4" />
+                  AIからの数値提案
                 </AlertTitle>
                 <AlertDescription>
                   <ul className="list-disc list-inside space-y-1 mt-2">
@@ -620,24 +823,41 @@ export default function PhasePage() {
               </Alert>
             )}
 
-            {/* 現在の選択状況表示 */}
+            {/* 数値入力のサマリー表示 */}
             {Object.keys(selections).length > 0 && (
               <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-                <h4 className="font-medium mb-2">現在の選択状況</h4>
+                <h4 className="font-medium mb-2 flex items-center gap-2">
+                  <Ruler className="h-4 w-4" />
+                  現在の数値設定
+                </h4>
                 <div className="text-sm space-y-1">
                   {Object.entries(selections).map(([phaseKey, phaseSelections]) => {
                     const phaseNum = parseInt(phaseKey.split('_')[1])
                     const phaseName = phases.find(p => p.id === phaseNum)?.name
+                    const phaseData = phases.find(p => p.id === phaseNum)
+                    
                     return (
                       <div key={phaseKey}>
-                        <strong>{phaseName}:</strong>{' '}
+                        <strong className="text-primary">{phaseName}:</strong>{' '}
                         {Object.entries(phaseSelections).map(([selectionId, value]) => {
-                          const selection = phases.find(p => p.id === phaseNum)?.selections?.find(s => s.id === selectionId)
-                          if (Array.isArray(value)) {
-                            return `${selection?.label}: ${value.length}項目選択`
+                          const selection = phaseData?.selections?.find(s => s.id === selectionId)
+                          
+                          if (!selection) return null
+                          
+                          if (selection.type === "slider" || selection.type === "numeric") {
+                            return (
+                              <span key={selectionId} className="inline-flex items-center gap-1 mr-3">
+                                <Badge variant="outline" className="text-xs">
+                                  {selection.label}: {value as number}{selection.unit}
+                                </Badge>
+                              </span>
+                            )
+                          } else if (Array.isArray(value)) {
+                            return `${selection.label}: ${value.length}項目選択`
+                          } else {
+                            const option = selection.options?.find((o: any) => o.value === value)
+                            return `${selection.label}: ${option?.label}`
                           }
-                          const option = selection?.options?.find(o => o.value === value)
-                          return `${selection?.label}: ${option?.label}`
                         }).join(', ')}
                       </div>
                     )
@@ -671,8 +891,11 @@ export default function PhasePage() {
             {phases.map((p) => {
               const phaseKey = `phase_${p.id}`
               const phaseSelections = selections[phaseKey] || {}
-              const requiredSelections = p.selections?.filter(s => !s.multiple) || []
-              const completedSelections = requiredSelections.filter(s => phaseSelections[s.id])
+              const requiredSelections = p.selections?.filter(s => s.type !== "multiple_choice") || []
+              const completedSelections = requiredSelections.filter(s => {
+                const value = phaseSelections[s.id]
+                return value !== undefined && value !== null && value !== ""
+              })
               const completionRate = requiredSelections.length > 0 ? 
                 Math.round((completedSelections.length / requiredSelections.length) * 100) : 100
               
@@ -700,10 +923,13 @@ export default function PhasePage() {
           </div>
         </div>
 
-        {/* 仕様書プレビュー */}
+        {/* 技術仕様書プレビュー */}
         {Object.keys(selections).length > 0 && (
           <div className="mt-8 p-6 bg-card rounded-lg border">
-            <h3 className="font-semibold mb-4">仕様書プレビュー</h3>
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <Ruler className="h-4 w-4" />
+              技術仕様書プレビュー
+            </h3>
             <div className="space-y-4 text-sm">
               {Object.entries(selections).map(([phaseKey, phaseSelections]) => {
                 const phaseNum = parseInt(phaseKey.split('_')[1])
@@ -712,30 +938,67 @@ export default function PhasePage() {
                 return (
                   <div key={phaseKey} className="border-l-2 border-primary/20 pl-4">
                     <h4 className="font-medium text-primary mb-2">{phaseData?.name}</h4>
-                    {Object.entries(phaseSelections).map(([selectionId, value]) => {
-                      const selection = phaseData?.selections?.find(s => s.id === selectionId)
-                      
-                      return (
-                        <div key={selectionId} className="mb-2">
-                          <span className="font-medium">{selection?.label}:</span>{' '}
-                          {Array.isArray(value) ? (
-                            <span>
-                              {value.map(v => {
-                                const option = selection?.options?.find(o => o.value === v)
-                                return option?.label
-                              }).join(', ')}
-                            </span>
-                          ) : (
-                            <span>
-                              {selection?.options?.find(o => o.value === value)?.label}
-                            </span>
-                          )}
-                        </div>
-                      )
-                    })}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {Object.entries(phaseSelections).map(([selectionId, value]) => {
+                        const selection = phaseData?.selections?.find(s => s.id === selectionId)
+                        if (!selection) return null
+                        
+                        return (
+                          <div key={selectionId} className="mb-2">
+                            <span className="font-medium">{selection.label}:</span>{' '}
+                            {selection.type === "slider" || selection.type === "numeric" ? (
+                              <Badge variant="outline" className="ml-1">
+                                {value as number}{selection.unit}
+                              </Badge>
+                            ) : Array.isArray(value) ? (
+                              <span>
+                                {value.map(v => {
+                                  const option = selection.options?.find((o: any) => o.value === v)
+                                  return option?.label
+                                }).join(', ')}
+                              </span>
+                            ) : (
+                              <span>
+                                {selection.options?.find((o: any) => o.value === value)?.label}
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 )
               })}
+            </div>
+
+            {/* 数値設定のサマリー */}
+            <div className="mt-6 p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <h4 className="font-medium text-primary mb-3 flex items-center gap-2">
+                <Ruler className="h-4 w-4" />
+                重要な寸法データ
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                {Object.entries(selections).flatMap(([phaseKey, phaseSelections]) => {
+                  const phaseNum = parseInt(phaseKey.split('_')[1])
+                  const phaseData = phases.find(p => p.id === phaseNum)
+                  
+                  return Object.entries(phaseSelections)
+                    .map(([selectionId, value]) => {
+                      const selection = phaseData?.selections?.find(s => s.id === selectionId)
+                      if (!selection || (selection.type !== "slider" && selection.type !== "numeric")) return null
+                      
+                      return (
+                        <div key={`${phaseKey}-${selectionId}`} className="text-center">
+                          <div className="text-xs text-muted-foreground">{selection.label}</div>
+                          <div className="text-lg font-bold text-primary">
+                            {value as number}{selection.unit}
+                          </div>
+                        </div>
+                      )
+                    })
+                    .filter(Boolean)
+                })}
+              </div>
             </div>
           </div>
         )}
