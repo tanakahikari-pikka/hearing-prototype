@@ -1,12 +1,43 @@
-version: '3.8'
-
 services:
-  nextjs-dev:
+  app:
     build: .
     ports:
-      - "3025:3000"
-    volumes:
-      - .:/app
-      - /app/node_modules
+      - "3000:3000"
     environment:
       - NODE_ENV=development
+    develop:
+      watch:
+        # srcディレクトリ全体を監視
+        - action: sync
+          path: ./src
+          target: /app/src
+          ignore:
+            - "**/.next"
+            - "**/node_modules"
+        
+        # publicディレクトリを監視
+        - action: sync
+          path: ./public
+          target: /app/public
+        
+        # 設定ファイルの変更時は再ビルド
+        - action: rebuild
+          path: ./package.json
+        
+        - action: rebuild
+          path: ./package-lock.json
+        
+        - action: rebuild
+          path: ./next.config.ts
+        
+        - action: rebuild
+          path: ./tsconfig.json
+        
+        # その他の設定ファイル
+        - action: sync
+          path: ./tailwind.config.ts
+          target: /app/tailwind.config.ts
+        
+        - action: sync
+          path: ./postcss.config.mjs
+          target: /app/postcss.config.mjs

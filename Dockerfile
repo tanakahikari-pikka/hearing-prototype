@@ -1,13 +1,10 @@
-# Dockerfile
 FROM node:18-alpine
 
 WORKDIR /app
 
-# package.jsonとpackage-lock.jsonをコピー
+# 依存関係のインストール
 COPY package*.json ./
-
-# 依存関係をインストール
-RUN npm install
+RUN npm ci
 
 # ソースコードをコピー
 COPY . .

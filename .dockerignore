@@ -1,5 +1,15 @@
 node_modules
 .next
 .git
-.env.local
 *.log
+.env*.local
+.dockerignore
+Dockerfile
+docker-compose.yml
+README.md
+.gitignore
+coverage
+.nyc_output
+.cache
+dist
+build

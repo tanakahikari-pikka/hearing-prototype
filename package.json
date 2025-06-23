@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
     "start": "next start",
+    "watch": "docker compose watch",
+    "build": "docker compose build",
     "lint": "next lint"
   },
   "dependencies": {

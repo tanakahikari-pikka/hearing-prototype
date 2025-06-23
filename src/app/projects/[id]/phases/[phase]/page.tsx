@@ -437,7 +437,7 @@ export default function NumericInputPhasePage() {
           4: "左胸ポケットで12cm幅、裾は軽くカーブさせて、サイドシームも少しカーブを付けたいです。",
           5: "S、M、Lの3展開で、サイズ間隔は5cmでお願いします。",
           6: "縫い代は1.2cm、縫い目密度は14針/cmで品質重視でお願いします。",
-          7: "フィット許容範囲は2.5cmで、少しゆとりのある着心地にしたいです。"
+          7: "フィット許容範囲は2.5cmで、少しゆとりのある着心地にしたいです。",
         }
 
         setTranscript(phaseExamples[currentPhase as keyof typeof phaseExamples] || "")
