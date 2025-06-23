@@ -20,7 +20,7 @@ export default function NewProject() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (projectName.trim()) {
-      router.push("/projects/1/phases/1")
+      router.push("/forms/1/phases/1")
     }
   }
 
@@ -33,16 +33,16 @@ export default function NewProject() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">新しいプロジェクトを作成</CardTitle>
-            <CardDescription>プロジェクトの基本情報を入力してください。後で編集することもできます。</CardDescription>
+            <CardTitle className="text-2xl">新しいフォームを作成</CardTitle>
+            <CardDescription>フォームの基本情報を入力してください。後で編集することもできます。</CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="project-name">プロジェクト名</Label>
+                <Label htmlFor="project-name">製品名</Label>
                 <Input
                   id="project-name"
-                  placeholder="例: 夏物新作ワンピース"
+                  placeholder="例: ワンピース"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
                   required
@@ -50,10 +50,10 @@ export default function NewProject() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="project-description">プロジェクト概要（任意）</Label>
+                <Label htmlFor="project-description">製品概要（任意）</Label>
                 <Textarea
                   id="project-description"
-                  placeholder="プロジェクトの目的や背景などを簡単に記述してください"
+                  placeholder="製品の目的や背景などを簡単に記述してください"
                   rows={4}
                   value={projectDescription}
                   onChange={(e) => setProjectDescription(e.target.value)}

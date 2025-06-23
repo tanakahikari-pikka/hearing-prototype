@@ -66,7 +66,7 @@ export default function Home() {
         </div>
 
         <div className="flex justify-center mb-16">
-          <Link href="/projects/new">
+          <Link href="/forms/new">
             <Button size="lg" className="gap-2">
               新しいプロジェクトを開始 <ArrowRight className="h-4 w-4" />
             </Button>

@@ -67,7 +67,7 @@ export default function ResultPage({ params }: { params: { id: string } }) {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
             <Link
-              href={`/projects/${params.id}/phases/7`}
+              href={`/forms/${params.id}/phases/7`}
               className="flex items-center text-muted-foreground hover:text-foreground mb-2"
             >
               <ArrowLeft className="mr-2 h-4 w-4" /> 編集に戻る
